@@ -1,0 +1,136 @@
+import java.util.ArrayList;
+import java.util.Vector;
+
+
+class Player {
+
+
+	// /There is no data in the beginning, so not much should be done here.
+	public Player() {				
+	}
+
+	/**
+	 * Shoot!
+	 * 
+	 * This is the function where you start your work.
+	 * 
+	 * You will receive a variable pState, which contains information about all
+	 * birds, both dead and alive. Each birds contains all past actions.
+	 * 
+	 * The state also contains the scores for all players and the number of
+	 * time steps elapsed since the last time this function was called.
+	 * 
+	 * @param pState the GameState object with observations etc
+	 * @param pDue time before which we must have returned
+	 * @return the prediction of a bird we want to shoot at, or cDontShoot to pass
+	 */
+	public Action shoot(GameState pState, Deadline pDue) {		
+		/*
+		 * Here you should write your clever algorithms to get the best action.
+		 * This skeleton never shoots.
+		 */
+            
+		if (pState.getBird(0).getSeqLength()<10){			
+			return cDontShoot;
+		}		
+		
+		int arithmBirds = pState.getNumBirds();
+		ArrayList<Hmm> birds = new ArrayList<Hmm>();
+		double[] pithan = new double[arithmBirds];		
+		
+		//cdimiourgei to hmm gia to kathe pouli		
+		for (int i=0; i<arithmBirds; i++) {
+                    int parat = pState.getBird(i).getSeqLength();		
+                    Vector<Integer> sequence = new Vector<Integer>();
+                    for (int j = 0; j < parat; j++) {
+                        sequence.add(pState.getBird(i).getObservation(j));        	
+                    }
+                    birds.add(new Hmm(sequence));
+		}
+		
+
+                //train to kathe montelo kai epilegei to kalutero
+		for (int i = 0; i < arithmBirds; i++) {
+                    if (pState.getBird(i).isAlive()) {
+                        pithan[i] = birds.get(i).train();
+                    }
+                    //System.err.println("pithan[i] = "+pithan[i]);
+                }
+		
+		int index = -1;
+                double vevaio = Double.NEGATIVE_INFINITY;
+                for (int i = 0; i < arithmBirds; i++) {
+                    if (pState.getBird(i).isAlive() && (pithan[i] > vevaio)) {            
+                        vevaio = pithan[i];
+                        index = i;  
+                    }
+                }
+                //System.err.println("vevaio = "+vevaio+" and index= "+index);
+                //System.err.println("vevaio = "+vevaio);
+                if (vevaio < -21.8) {        	        	
+                    Object[] b = birds.get(index).nextEmission();
+                    //System.err.println("(double)b[1] = "+(double)b[1]+" and (int)b[0]= "+(int)b[0]);
+                    if ((double)b[1] >= 0.5){
+                        return new Action(index, (int)b[0]);
+                    }else{
+                        return cDontShoot;
+                    }            
+                }else{
+                    return cDontShoot;
+                }
+        
+	}
+
+	/**
+	 * Guess the species!
+	 * This function will be called at the end of each round, to give you
+	 * a chance to identify the species of the birds for extra points.
+	 * 
+	 * Fill the vector with guesses for the all birds.
+	 * Use SPECIES_UNKNOWN to avoid guessing.
+	 * 
+	 * @param pState the GameState object with observations etc
+	 * @param pDue time before which we must have returned
+	 * @return a vector with guesses for all the birds
+	 */
+	public int[] guess(GameState pState, Deadline pDue) {
+		/*
+		 * Here you should write your clever algorithms to guess the species of
+		 * each bird. This skeleton makes no guesses, better safe than sorry!
+		 */
+
+		int[] lGuess = new int[pState.getNumBirds()];
+		for (int i = 0; i < pState.getNumBirds(); ++i)
+			lGuess[i] = Constants.SPECIES_UNKNOWN;
+		return lGuess;
+	}
+
+	/**
+	 * If you hit the bird you were trying to shoot, you will be notified
+	 * through this function.
+	 * 
+	 * @param pState the GameState object with observations etc
+	 * @param pBird the bird you hit
+	 * @param pDue time before which we must have returned
+	 */
+	public void hit(GameState pState, int pBird, Deadline pDue) {
+		System.err.println("HIT BIRD!!!");
+	}
+
+	/**
+	 * If you made any guesses, you will find out the true species of those
+	 * birds through this function.
+	 * 
+	 * @param pState the GameState object with observations etc
+	 * @param pSpecies the vector with species
+	 * @param pDue time before which we must have returned
+	 */
+	public void reveal(GameState pState, int[] pSpecies, Deadline pDue) {
+	}
+	
+	
+
+	public static final Action cDontShoot = new Action(-1, -1);
+	public static final double trustThreshold = 0.2;
+	
+}
