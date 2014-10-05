@@ -1,0 +1,112 @@
+
+
+import java.util.*;
+
+public class Player {
+	/**
+	 * Performs a move
+	 * 
+	 * @param pState
+	 *            the current state of the board
+	 * @param pDue
+	 *            time before which we must have returned
+	 * @return the next state the board is in after our move
+	 */
+	public GameState play(final GameState pState, final Deadline pDue) {
+
+		Vector<GameState> lNextStates = new Vector<GameState>();
+		pState.findPossibleMoves(lNextStates);
+
+		if (lNextStates.size() == 0) {
+			// Must play "pass" move if there are no other moves possible.
+			return new GameState(pState, new Move());
+		} // End if
+
+		/**
+		 * Here you should write your algorithms to get the best next move, i.e.
+		 * the best next state. This skeleton returns a random move instead.
+		 */
+                boolean iamred;
+                boolean max=false;
+                if (pState.getNextPlayer()==Constants.CELL_RED){
+                    iamred=true;
+                }
+                else{
+                    iamred=false;
+                }
+                int depth=8;
+                int i=0;
+                int ind=0;
+                int a=-1000000000;
+                int b=1000000000;
+                for (GameState temp:lNextStates){
+                    int value=minimax(temp,iamred,max,depth,a,b);
+                    if (value>a){
+                        a=value;
+                        ind=i;
+                    }
+                    i++;
+                }
+                GameState best=lNextStates.get(ind);
+                return best;
+	} // End Play
+        
+        public int minimax(GameState father,boolean iamred,boolean max,int depth,int a,int b){
+            Vector<GameState> nextMove = new Vector<GameState>();
+            father.findPossibleMoves(nextMove);
+            if (depth<=0||nextMove.isEmpty()){
+                int value=evaluate(father,iamred);
+                return value;
+            }
+            if (max){
+                for (GameState temp:nextMove){
+                    int value=minimax(temp,iamred,!max,depth-1,a,b);
+                    if (value>a){
+                        a=value;
+                    }
+                    if (b<=a){
+                        break;
+                    }
+                }
+                return a;
+            }else{
+                for (GameState temp:nextMove){
+                    int value=minimax(temp,iamred,!max,depth-1,a,b);
+                    if (value<b){
+                        b=value;
+                    }
+                    if (b<=a){
+                        break;
+                    }
+                }
+                return b;
+            }
+        }
+        
+        public int evaluate(GameState pState,boolean iamred){
+            int value=0;
+             for (int j=1; j<32; j+=1){
+                 if (pState.get(j)==Constants.CELL_WHITE){
+                     value-=1;
+                 }
+                 if (pState.get(j)==Constants.CELL_RED){
+                     value+=1;
+                 }
+                 if (pState.get(j)==Constants.CELL_RED & pState.get(j)==Constants.CELL_KING){
+                     value+=3;
+                 }
+                 if (pState.get(j)==Constants.CELL_WHITE & pState.get(j)==Constants.CELL_KING){
+                     value-=3;
+                 }
+             }//for
+             if (pState.isRedWin()){
+                 value+=100000;
+             }
+             if (iamred){
+                  return value;
+             }
+             else{
+                  return -value;
+             }
+          }
+} // End class Player
