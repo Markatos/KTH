@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<grammar xml:lang="en-US" version="1.0" root="srgs_root"
+	xmlns="http://www.w3.org/2001/06/grammar" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.w3.org/2001/06/grammar srgs.xsd" tag-format="semantics/1.0">
+	
+	<!--
+	Editor:Markatos Gerasimos,Alexandra Georgoudakis
+	-->
+	
+	<rule id="srgs_root" scope="public">
+		<one-of>
+			<item><ruleref uri="#hello"/><tag>out.hello=1</tag></item>
+			<item><ruleref uri="#yes"/><tag>out.yes=1</tag></item>
+			<item><ruleref uri="#no"/><tag>out.no=1</tag></item>
+			<item><ruleref uri="#dontknow"/><tag>out.dontknow=1</tag></item>
+			<item><ruleref uri="#search"/><tag>out.search=1</tag></item>
+			<item><ruleref uri="#borrow"/><tag>out.borrow=1</tag></item>
+			<item><ruleref uri="#login"/><tag>out.login=1</tag></item>
+			<item><ruleref uri="#returnqwe"/><tag>out.returnqwe=1</tag></item>
+			<item><ruleref uri="#checkcharges"/><tag>out.checkcharges=1</tag></item>
+			<item><ruleref uri="#checkhistory"/><tag>out.checkhistory=1</tag></item>
+			<item><ruleref uri="#logout"/><tag>out.logout=1</tag></item>
+			<item><ruleref uri="#create"/><tag>out.create=1</tag></item>
+			<item><ruleref uri="#help"/><tag>out.help=1</tag></item>
+			<item><ruleref uri="#bookone"/><tag>out.bookone=1</tag></item>
+			<item><ruleref uri="#one"/><tag>out.one=1</tag></item>
+			<item><ruleref uri="#booktwo"/><tag>out.booktwo=1</tag></item>
+			<item><ruleref uri="#two"/><tag>out.two=1</tag></item>
+			<item><ruleref uri="#bookthree"/><tag>out.bookthree=1</tag></item>
+			<item><ruleref uri="#three"/><tag>out.three=1</tag></item>
+			<item><ruleref uri="#bookfour"/><tag>out.bookfour=1</tag></item>
+			<item><ruleref uri="#four"/><tag>out.four=1</tag></item>
+			<item><ruleref uri="#bookfive"/><tag>out.bookfive=1</tag></item>
+			<item><ruleref uri="#five"/><tag>out.five=1</tag></item>
+			<item><ruleref uri="#booksix"/><tag>out.booksix=1</tag></item>
+			<item><ruleref uri="#six"/><tag>out.six=1</tag></item>
+			<item><ruleref uri="#seven"/><tag>out.seven=1</tag></item>
+			<item><ruleref uri="#username"/><tag>out.username=1</tag></item>
+			<item><ruleref uri="#password"/><tag>out.password=1</tag></item>
+		</one-of>
+	</rule> 
+
+	<rule id="yes" scope="public">
+		<one-of>
+			<item>yes</item>
+			<item>sure</item>
+			<item>yes,please</item>
+		</one-of>
+	</rule>
+
+	<rule id="no" scope="public">
+		<one-of>
+			<item>no</item>
+			<item>I don't think so</item>
+		</one-of>
+	</rule>
+	
+	<rule id="dontknow" scope="public">
+		<one-of>
+			<item>i don't know</item>
+			<item>i have no idea</item>
+		</one-of>
+	</rule>
+	
+	<rule id="search" scope="public">
+		<one-of>
+			<item>search for a book</item>
+			<item>book</item>
+			<item>search</item>
+			<item>to search for a book</item>
+			<item>to search</item>
+			<item>I would like to search for a book</item>
+		</one-of>
+	</rule>
+	
+	<rule id="hello" scope="public">
+		<one-of>
+			<item>hello</item>
+			<item>hello lib assist</item>
+		</one-of>
+	</rule>
+	
+	<rule id="login" scope="public">
+		<one-of>
+			<item>login</item>
+			<item>log in</item>
+			<item>to login</item>
+			<item>to log in</item>
+			<item>I want to login</item>
+			<item>I want to log in</item>
+			<item>I would like to login</item>
+			<item>I would like to log in</item>
+		</one-of>
+	</rule>
+	
+	<rule id="create" scope="public">
+		<one-of>
+			<item>create</item>
+			<item>to create</item>
+			<item>to create an account</item>
+			<item>create an account</item>
+			<item>I want to create an account</item>
+			<item>I would like to create an account</item>
+			
+		</one-of>
+	</rule>
+	
+	<rule id="borrow" scope="public">
+		<one-of>
+			<item>borrow</item>
+			<item>to borrow</item>
+			<item>to borrow a book</item>
+			<item>borrow a book</item>
+			<item>I want to borrow a book</item>
+			<item>I would like to borrow a book</item>
+		</one-of>
+	</rule>
+
+	<rule id="returnqwe" scope="public">
+		<one-of>
+			<item>return</item>
+			<item>to return</item>
+			<item>to return a book</item>
+			<item>return a book</item>
+			<item>I want to return a bookt</item>
+			<item>I would like to return a book</item>
+			
+		</one-of>
+	</rule>
+	
+	<rule id="checkcharges" scope="public">
+		<one-of>
+		 	<item>check charges</item>
+		 	<item>check for charges</item>
+			<item>to check charges</item>
+			<item>check my charges</item>
+			<item>to check my charges</item>
+			<item>I want to check my charges</item>
+			<item>I would like to check my charges</item>
+		</one-of>
+	</rule>
+	
+	<rule id="checkhistory" scope="public">
+		<one-of>
+		 	<item>check history</item>
+			<item>to check history</item>
+			<item>check my history</item>
+			<item>to check my history</item>
+			<item>I want to check my history</item>
+			<item>I would like to check my history</item>
+		</one-of>
+	</rule>
+	
+	<rule id="logout" scope="public">
+		<one-of>
+			<item>log out</item>
+			<item>to log out</item>
+			<item>I want to log out</item>
+			<item>I would like to log out</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="help" scope="public">
+		<one-of>
+			<item>help</item>
+			<item>get help</item>
+			<item>to get help</item>
+		</one-of>
+	</rule>
+	
+	<rule id="bookone" scope="public">
+		<one-of>
+			<item>robotics</item>
+		</one-of>
+	</rule>
+	
+	<rule id="one" scope="public">
+		<one-of>
+			<item>yes, it's john young</item>
+			<item>john young</item>
+		</one-of>
+	</rule>
+	
+	<rule id="booktwo" scope="public">
+		<one-of>
+			<item>bioinformatics</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="two" scope="public">
+		<one-of>
+			<item>yes, it's jeremy ramsden</item>
+			<item>jeremy ramsden</item>
+		</one-of>
+	</rule>
+	
+	<rule id="bookthree" scope="public">
+		<one-of>
+			<item>machine learning</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="three" scope="public">
+		<one-of>
+			<item>yes, it's kevin murphy</item>
+			<item>kevin murphy</item>
+		</one-of>
+	</rule>
+	
+	<rule id="bookfour" scope="public">
+		<one-of>
+			<item>applied mathematics</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="four" scope="public">
+		<one-of>
+			<item>yes, it's alwin walther</item>
+			<item>alwin walther</item>
+		</one-of>
+	</rule>
+	
+	<rule id="bookfive" scope="public">
+		<one-of>
+			<item>chemistry</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="five" scope="public">
+		<one-of>
+			<item>yes, it's raymond chang</item>
+			<item>raymond chang</item>
+		</one-of>
+	</rule>
+	
+	<rule id="booksix" scope="public">
+		<one-of>
+			<item>physics</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="six" scope="public">
+		<one-of>
+			<item>yes, it's james walker</item>
+			<item>james walker</item>
+		</one-of>
+	</rule>
+	
+	
+	<rule id="seven" scope="public">
+		<one-of>
+			<item>yes</item>
+			<item>yes, it's jay orear</item>
+			<item>jay orear</item>
+		</one-of>
+	</rule>
+	
+<rule id="username" scope="public">
+		<one-of>
+			<item>alex</item>
+			<item>makis</item>
+			<item>dimis</item>
+		</one-of>
+	</rule>
+	
+<rule id="password" scope="public">
+		<one-of>
+			<item>one, two, three</item>
+		</one-of>
+	</rule>		
+</grammar>
