@@ -1,0 +1,121 @@
+// Constructor
+PriceChart = function(elementSelector, width, height, margin) {
+	this.chart = d3.select(elementSelector);
+	this.width = width - margin.left - margin.right;
+	this.height = height - margin.top - margin.bottom;
+	this.margin = margin;
+	
+	this.duration = 1000;
+	this.maxValue = 0;
+	
+	this.initialize();
+};
+
+PriceChart.prototype = {
+    initialize: function() {    	
+    	// Create the canvas and adapt width and height of the hosting element
+    	this.canvas = this.chart
+    		.attr('width', this.width + this.margin.left + this.margin.right)
+    		.attr('height', this.height + this.margin.top + this.margin.bottom)
+    		.append('svg')
+	    		.attr('width', this.width + this.margin.left + this.margin.right)
+	    		.attr('height', this.height + this.margin.top + this.margin.bottom)
+	    		.append('g')
+	    			.attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')')
+	    			.attr('class', 'canvas');
+    },
+    
+    clear: function() {
+    	this.chart.html('');
+    	this.initialize();
+    },
+    
+    /**
+     * Creates a new bar chart to compare the prices with the given data
+     * 
+     * @param data An array containing the data. Should consists of objects with two attributes: type and value.
+     */
+    createBarChart: function(data) {
+    	data = [{ type: 'Actual', value: data}, { type: 'Modified', value: data}];
+    	
+    	// Create the scales for the graph.
+	    this.x = d3.scale.ordinal()
+			.rangeRoundBands([0, this.width], .45)						// Set the range for the x axis in pixels with padding 0.1
+			.domain(data.map(function(d) { return d.type }));			// Set the domain for the x axis only using the time string    	
+		this.y = d3.scale.linear()
+			.range([this.height, 0])									// Set the range in pixels for the y axis
+			.domain([0, (3/2) * this.maxValue]);						// Set the domain for the y axis. The maximum value is so that the maximum cost of all days is at 2/3 of the y scale
+		
+		// Create and draw the x axis
+		var xAxis = d3.svg.axis()
+			.scale(this.x)
+			.orient('bottom');
+		this.canvas.append('g')
+			.attr('class', 'x axis')
+			.attr('transform', 'translate(0,' + this.height + ')')
+			.call(xAxis);
+    	
+    	// Draw the bars
+    	var self = this;
+    	this.canvas.selectAll(".priceBar")
+    		.data(data)
+    		.enter().append("g")
+    			.attr("class", function(d) { return 'priceBar ' + d.type; })
+    			.attr("transform", function(d) { return "translate(" + self.x(d.type) + ",0)"; })
+    			.append("rect")
+    				.attr("y", this.height)
+    				.attr("height", 0)
+    				.attr('width', this.x.rangeBand())
+    	        .transition()
+    				.duration(this.duration)
+    				.attr("y", function(d) {return self.y(d.value); })
+    				.attr("height", function(d) { return self.height-self.y(d.value); });
+    	
+    	// Add price text above the bar
+    	this.canvas.selectAll('.priceBar')
+    		.append('text')
+    			.attr('text-anchor', 'middle')
+    			.attr('x', (this.x.rangeBand()/2))
+				.attr('y', this.y(0))
+    			.attr('dy', '-.5em')
+    			.text(function(d) { return parseFloat(d.value.toFixed(2)) + ' SEK' })
+    			.style('font-size', '12px')
+    			.style('fill', 'black')
+    			.transition()
+    				.duration(this.duration)    				
+    				.attr('y', function(d) { return self.y(d.value); });
+    },
+    
+    /**
+     * Changes the cost of the electricity use of the day.
+     * 
+     * @param costChange The change in cost. Positive if we add cost, negative if we delete.
+     * @param addToOriginal Optional. If set to true, the changes will also be applied to the original bar.
+     */
+    change: function(costChange, addToOriginal) {    
+    	var bars = []
+    	if (addToOriginal)
+    		bars.push(this.canvas.select('.Actual'));
+    	bars.push(this.canvas.select('.Modified'));    		
+    		
+    	for (var i in bars) {
+	    	var bar = bars[i];
+	    	var data = bar.datum();
+	    	data.value += costChange;
+	    	
+	    	// Move the bar
+	    	bar.select('rect').transition()
+	    		.duration(this.duration)
+	    		.attr('y', this.y(data.value))
+	    		.attr('height', this.height-this.y(data.value));
+	    	
+	    	// Move than change the price text
+	    	bar.select('text')
+	    		.transition()
+	    			.duration(this.duration)
+	    			.attr('y', this.y(data.value))
+	    		.transition()
+	        		.text(parseFloat(data.value.toFixed(2)) + ' SEK');
+    	}
+    },
+};
