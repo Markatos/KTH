@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+	<title>DH2321 Information Visualization 2014 - Project 4</title>
+	
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">  
+    <link rel="stylesheet" href="layout.css" type="text/css" media="screen">	
+	
+	<script type='text/javascript' src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script type='text/javascript' src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+	<script type='text/javascript' src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  	<script type='text/javascript' src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+  	<script type="text/javascript" src="jquery.idTabs.min.js"></script>
+	<script type='text/javascript' src="electricityChart.js"></script>
+	<script type='text/javascript' src="priceChart.js"></script>
+	<script type='text/javascript' src="energimolnet.js"></script>
+</head>
+<body>
+	<div class="container">
+		<div class="meter-selection"></div>
+		<table class="app">
+			<tr>
+				<td colspan="2"><div class="date"><input class="datepicker" type="text"></div></td>
+			</tr>
+			<tr>
+				<td style="vertical-align: top;">
+					<div class="tabs">
+						<ul> 
+							<li><a href="#add-tab">Add use</a></li> 
+						  	<li><a href="#move-tab">Move use</a></li>
+						</ul> 
+						<div id="add-tab" class="tab">
+							<table>
+								<tr>
+									<td colspan="2">
+										<p class="text">Appliance</p>
+										<select class="appliances" size="1" ></select><br/>
+										<p class="text sub">Power: <span class="power">-</span></p>
+									</td>
+								</tr>
+								<tr>
+									<td>Duration:</td>
+									<td>
+										<select class="duration hour"></select>h <select class="duration minute"></select>min
+									</td>
+								</tr>	
+								<tr>
+									<td>Start time:</td>
+									<td>
+										<select class="start-time hour"></select> : <select class="start-time minute"></select>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2" class="bottom-row"><div id="add-appliance" class="button">Add to chart</div></td>
+								</tr>
+							</table>
+						</div> 
+						<div id="move-tab" class="tab">
+							<table>
+								<tr>
+									<td colspan="2">
+										<p class="text">Appliance</p>
+										<select class="appliances" size="1" ></select><br/>
+										<p class="text sub">Power: <span class="power">-</span></p>
+									</td>
+								</tr>
+								<tr>
+									<td>Duration:</td>
+									<td>
+										<select class="duration hour"></select>h <select class="duration minute"></select>min
+									</td>
+								</tr>
+								<tr>
+									<td>Move from:</td>
+									<td>
+										<select class="start-time hour"></select> : <select class="start-time minute"></select>
+									</td>
+								</tr>	
+								<tr>
+									<td>To start time:</td>
+									<td>
+										<select class="to-time hour"></select> : <select class="to-time minute"></select>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2" class="bottom-row"><div id="move-appliance" class="button">Move on chart</div></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</td>
+				<td rowspan="2" class="electricityChart"></td>				
+			</tr>
+			<tr>
+				<td style="vertical-align: bottom;">
+					<div class="priceChart-container">
+						<div class="priceChart-header">Daily electricity cost</div>
+						<div class="priceChart-subheader">based on market price</div>
+						<div class="priceChart"></div>
+					</div>
+				</td>
+			</tr>	
+		</table>
+	</div>
+</body>
+</html>
