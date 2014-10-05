@@ -1,0 +1,130 @@
+import java.util.Vector;
+
+
+class Hmm {
+
+	double[][] a;
+	double[][] b;
+	double[] pi;
+	Vector<Integer> sequence;
+	int n;
+	int m;		
+	
+	
+	public Hmm(double[][] transition, double[][] emission, double[] initial) {
+            a = transition;
+            b = emission;
+            pi = initial;
+            n = a.length;
+            m = b.length;
+	}
+	
+	
+	public Hmm(Vector<Integer> seq) {
+            a = new double[][]{
+				{0.6, 0.1, 0.1, 0.1, 0.1},
+                                {0.1, 0.6, 0.1, 0.1, 0.1},
+                                {0.1, 0.1, 0.6, 0.1, 0.1},
+                                {0.1, 0.1, 0.1, 0.6, 0.1},
+                                {0.1, 0.1, 0.1, 0.1, 0.6}};
+            b = new double[][]{
+				{0.040, 0.040, 0.040, 0.330, 0.100, 0.330, 0.040, 0.040, 0.040},
+				{0.250, 0.030, 0.150, 0.003, 0.047, 0.040, 0.037, 0.410, 0.033},
+				{0.010, 0.100, 0.005, 0.220, 0.040, 0.125, 0.050, 0.400, 0.050},
+				{0.120, 0.120, 0.120, 0.120, 0.040, 0.120, 0.120, 0.120, 0.120},
+				{0.125, 0.125, 0.125, 0.120, 0.005, 0.125, 0.125, 0.125, 0.125}};
+		
+            pi = new double[]{0.2, 0.2, 0.2, 0.2, 0.2};
+            n = a.length;
+            m = b.length;
+            this.sequence = seq;			
+	}
+	
+	
+	double[][] takeA() {
+            return this.a;
+	}
+	
+	double[][] takeB() {
+            return this.b;
+	}
+		
+	public double train() {
+            Functions func = new Functions(this.n, sequence, 50);
+            int i=0;
+            do {
+		func.aPass(this);			
+		func.bPass(this);
+		func.g(this);
+		this.reestimation(func);
+		func.logProb(this);					
+		i++;		
+            }while (!func.stop(i, this));
+            return func.logProb;
+	}//train
+
+	void reestimation(Functions func) {
+            for (int i=0; i<this.n; i++) {
+                pi[i]=func.gamma[0][i];
+            }//pi
+            for (int i=0; i<this.n; i++) {
+                for (int j=0; j<this.n; j++) {
+                    double athroi = 0;
+                    double ari = 0;
+                    for (int t=0 ; t<sequence.size()-1; t++) {
+                        athroi += func.digamma[t][i][j];
+			ari += func.gamma[t][i];										
+                    }
+                    a[i][j]=athroi/ari;
+                }
+            }//a
+            for (int i=0; i<this.n; i++) {
+                for (int j=0; j<this.m; j++) {
+                    double athroi = 0;
+                    double ari = 0;
+                    for (int t=0; t<sequence.size()-1; t++) {
+                        if (sequence.get(t)==j) {
+                            athroi = athroi + func.gamma[t][i];
+			}
+			ari = ari + func.gamma[t][i];
+                    }
+                    b[i][j]=athroi/ari;
+		}
+            }//b
+	}//reestimation
+	
+	public Object[] nextEmission() {
+            Functions func = new Functions(this.n, this.sequence, 0);
+            func.aPass(this);
+            Object[] nextEmission = new Object[2];
+            double prosth = 0;
+            for (int i=0; i<this.n; i++) {
+                prosth += func.alpha[this.sequence.size()-1][i];
+            }
+            double ni = 1/prosth;			
+            double[] nextStates = new double[this.n];
+            for (int i=0; i<this.n; i++) {
+                for (int j=0; j<this.n; j++) {
+                    nextStates[i] += func.alpha[this.sequence.size()-1][j]*this.a[j][i];
+		}
+		nextStates[i] = nextStates[i]*ni;
+            }
+            double[] nextObservation = new double[this.m];
+            for (int i = 0; i<this.m; i ++) {
+                for (int j=0; j<this.n; j++) {
+                    nextObservation[i] += nextStates[j]*this.b[j][i];
+		}			
+            }
+            double meg = Double.NEGATIVE_INFINITY;
+            int argMeg = -1;    	
+            for (int i = 0; i<nextObservation.length; i++) {
+                if (nextObservation[i]>meg) {
+                    meg = nextObservation[i];
+                    argMeg = i;    					
+    		}
+            }
+            nextEmission[0] = argMeg;
+            nextEmission[1] = meg;
+            return nextEmission;
+	}//nextEmission	
+}
