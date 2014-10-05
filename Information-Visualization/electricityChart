@@ -1,0 +1,772 @@
+// Constructor
+ElectricityChart = function(elementSelector, width, height, margin) {
+	this.chart = d3.select(elementSelector);
+	this.legendWidth = 200;
+	this.width = width - margin.left - margin.right - this.legendWidth;
+	this.height = height - margin.top - margin.bottom;
+	this.margin = margin;
+	
+	this.duration = 1000;
+	this.maxUsage = 0;
+	this.legend = [];
+	this.yScale = [];
+	
+	this.initialize();
+};
+
+ElectricityChart.prototype = {
+    initialize: function() {    	
+    	// Create the canvas and adapt width and height of the hosting element
+    	this.canvas = this.chart
+    		.attr('width', this.width + this.margin.left + this.margin.right)
+    		.attr('height', this.height + this.margin.top + this.margin.bottom)
+    		.append('svg')
+	    		.attr('width', this.width + this.margin.left + this.margin.right)
+	    		.attr('height', this.height + this.margin.top + this.margin.bottom)
+	    		.append('g')
+	    			.attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')')
+	    			.attr('class', 'canvas');
+    },
+    
+    clear: function() {
+    	this.chart.html('');
+    	this.initialize();
+    	this.legend = [];
+    },
+    
+    createScales: function(data) { 
+    	var padding = 0.1;
+    	
+    	this.x = d3.scale.ordinal()
+    		.rangeRoundBands([0, this.width - this.legendWidth], padding, 0)				// Set the range for the x axis in pixels with padding
+    		.domain(data.map(function(d) { return d.date.getHours() }));					// Set the domain for the x axis only using the time string    	
+    	this.y = d3.scale.linear()
+			.range([this.height, 0])														// Set the range in pixels for the y axis
+			.domain([0, this.maxUsage]);													// Set the domain for the y axis
+    	
+    	// Create and draw the x axis
+    	var scaleForXAxis = d3.scale.linear()
+			.range([this.x(0)/2, this.x(23) + this.x.rangeBand() + this.x(0)/2])
+			.domain([0, 24]);
+    	var xAxis = d3.svg.axis()
+//			.scale(this.x)
+    		.scale(scaleForXAxis)
+    		.orient('bottom')
+    	    .tickValues([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24])
+//			.tickFormat(function (d) { return d + '-' + (+d+1); });
+			.tickFormat(function (d) {
+				if (d < 10)
+					return '0' + d;
+				else
+					return d;
+			});
+    	this.canvas.append('g')
+    		.attr('class', 'x axis')
+    		.attr('transform', 'translate(0,' + this.height + ')')
+    		.call(xAxis);
+    },
+    
+    /**
+     * Creates a new bar chart with the given data.
+     * 
+     * @param data An array containing the data. Should consists of objects with two attributes: date and usage.
+     * @param name The name which should be shown in the legend for this data.
+     * @param unit A string with the unit in which the data is
+     * @param className The name of the class which will be added to the bars.
+     */
+    createBarChart: function(data, name, unit, className) {
+    	// Clone the data
+    	var data = $.extend(true, [], data);
+    	for (var i in data)
+    		data[i].originalUsage = data[i].usage;
+    	
+    	// Create the scales for the graph.
+    	// We are doing this here because the bar chart is the chart which defines the scale of the axes
+    	this.createScales(data);
+    	
+    	// Draw the bars
+    	var self = this;
+    	this.canvas.selectAll(".bar")
+    		.data(data)
+    		.enter().append("g")
+    			.attr("class", "bar " + className)
+    			.attr("transform", function(d) { return "translate(" + self.x(d.date.getHours()) + ",0)"; })
+    			.append("rect")
+    				.attr("class", "originalBar")
+    				.attr("y", this.height)
+    				.attr("height", 0)
+    				.attr('width', this.x.rangeBand())
+    	        .transition()
+    				.duration(this.duration)
+    				.attr("y", function(d) {return self.y(d.usage); })
+    				.attr("height", function(d) { return self.height-self.y(d.usage); });
+    	
+    	// Add information for the legend
+    	this.legend.push({ name: name, unit: unit, className: className });
+    },
+    
+    /**
+     * Creates a new line chart with the given data.
+     * 
+     * @param data An array containing the data. Should consists of objects with two attributes: date and usage.
+     * @param name The name which should be shown in the legend for this data.
+     * @param unit A string with the unit in which the data is
+     * @param className The name of the class which will be added to the path.
+     */
+    createLineChart: function(data, name, unit, className) {
+    	// Clone the data
+    	var data = $.extend(true, [], data);
+    	
+    	// First adapt the data so that we do not start drawing in the middle of the first bar
+    	var newData = [{ pos: 'start', date: data[0].date, usage: data[0].usage }];							// Add a datum for the (0,0) point in the graph
+    	newData.push(data);		
+    	newData.push({ pos: 'end', date: data[data.length-1].date, usage: data[data.length-1].usage });		// Add a datum for the (xMax,0) point in the graph
+    	newData = $.map(newData, function(n){ return n; });
+
+    	// Adapted scales
+    	// TODO: Probably not necessary
+    	var x = d3.scale.ordinal()
+    		.rangeRoundBands([0, this.width-this.legendWidth], .1)							// Set the range for the x axis in pixels with padding 0.1
+    		.domain(newData.map(function(d) { return d.date.getHours(); }));				// Set the domain for the x axis only using the time string	
+    	var y = d3.scale.linear()
+    		.range([this.height, 0])														// Set the range in pixels for the y axis
+    		.domain([0, d3.max(newData, function(d) {return d.usage;})]);					// Calculate and set the domain for the y axis
+    	this.yScale[name] = y;
+    	
+    	// Draw the line chart
+    	var self = this;
+    	var line = d3.svg.line()
+    	    .x(function(d) { 
+    	    	if (d.pos == 'start')
+    	    		return x(d.date.getHours());
+    	    	else if (d.pos == 'end')
+    	    		return x(d.date.getHours()) + self.x.rangeBand();
+    	    	else
+    	    		return self.x(d.date.getHours()) + (self.x.rangeBand()/2); 
+    	    })
+    	    .y(function(d) { return y(d.usage); });
+
+    	// Create the line
+    	this.canvas.append("path")
+    		.datum(newData)
+    		.attr("class", 'line ' + className)
+    		.attr("d", line);
+    	
+    	// Create hidden tooltip circles
+    	this.canvas.selectAll('.path-info.' + className)
+    		.data(data)
+    		.enter().append('circle')
+				.attr('class', 'path-info ' + className)
+    			.attr('cx', function(d) { return self.x(d.date.getHours()) + (self.x.rangeBand()/2); })
+    			.attr('cy', function(d) { return y(d.usage); })
+    			.attr('r', 10)
+    			.style('opacity', 0);
+    	
+    	
+    	// Add information for the legend
+    	this.legend.push({ name: name, unit: unit, className: className });
+    },
+    
+    /**
+     * Creates a new area chart with the given data.
+     * 
+     * @param data An array containing the data. Should consists of objects with two attributes: date and usage.
+     * @param name The name which should be shown in the legend for this data.
+     * @param unit A string with the unit in which the data is
+     * @param className The name of the class which will be added to the path.
+     */
+    createAreaChart: function(data, name, unit, className) {
+    	// Clone the data
+    	var data = $.extend(true, [], data);
+    	
+    	// First adapt the data so that we do not start drawing in the middle of the first bar
+    	var newData = [{ pos: 'start', date: data[0].date, usage: data[0].usage }];							// Add a datum for the (0,0) point in the graph
+    	newData.push(data);		
+    	newData.push({ pos: 'end', date: data[data.length-1].date, usage: data[data.length-1].usage });		// Add a datum for the (xMax,0) point in the graph
+    	newData = $.map(newData, function(n){ return n; });
+    	
+    	// Adapted scales
+    	// TODO: Probably not necessary
+    	var x = d3.scale.ordinal()
+    		.rangeRoundBands([0, this.width-this.legendWidth], .1)							// Set the range for the x axis in pixels with padding 0.1
+    		.domain(newData.map(function(d) { return d.date.getHours(); }));				// Set the domain for the x axis only using the time string	
+    	var y = d3.scale.linear()
+    		.range([this.height, 0])														// Set the range in pixels for the y axis
+    		.domain([0, d3.max(newData, function(d) {return d.usage;})]);					// Calculate and set the domain for the y axis
+    	this.yScale[name] = y;
+    	
+    	// Draw the area chart
+    	var self = this;
+    	var area = d3.svg.area()
+		    .x(function(d) { 
+		    	if (d.pos == 'start')
+		    		return x(d.date.getHours());
+		    	else if (d.pos == 'end')
+		    		return x(d.date.getHours()) + self.x.rangeBand();
+		    	else
+		    		return this.x(d.date.getHours()) + (self.x.rangeBand()/2); 
+		    })
+    	    .y0(this.height)
+    	    .y1(function(d) { return y(d.usage); });
+
+    	// Create the area chart
+    	this.canvas.append("path")
+    		.datum(newData)
+    		.attr("class", 'area ' + className)
+    		.attr("d", area);
+    	
+    	// Create hidden tooltip circles
+    	this.canvas.selectAll('.path-info.' + className)
+			.data(data)
+			.enter().append('circle')
+				.attr('class', 'path-info ' + className)
+    			.attr('cx', function(d) { return self.x(d.date.getHours()) + (self.x.rangeBand()/2); })
+    			.attr('cy', function(d) { return y(d.usage); })
+    			.attr('r', 10)
+    			.style('opacity', 0);
+    	
+    	// Add information for the legend
+    	this.legend.push({ name: name, unit: unit, className: className });
+    },
+    
+    createLegend: function() {
+    	var range = [], domain = [];
+    	for (var i in this.legend) {
+    		range.push(this.legend[i].className);
+    		domain.push(this.legend[i].name);
+    	}
+    	
+    	var classes = d3.scale.ordinal()
+    		.range(range)
+    		.domain(domain);
+    	
+    	var legend = d3.select(this.canvas.node().parentNode).selectAll(".legend")
+    		.data(domain)
+    		.enter().append("g")
+    			.attr("class", "legend")
+    			.attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+    	legend.append("rect")
+    		.attr("x", this.width + this.margin.left + this.margin.right - this.legendWidth)
+    		.attr("width", 18)
+    		.attr("height", 18)
+    		.attr("class", classes);
+
+    	legend.append("text")
+    		.attr("x", this.width + this.margin.left + this.margin.right - this.legendWidth + 25)
+    		.attr("y", 9)
+    		.attr("dy", ".35em")
+    		.attr("text-anchor", "start")
+    		.text(function(d) { return d; });
+    },
+    
+    createTooltip: function() {
+		// Get all available information of the bar chart as well as the line/area charts
+		var data = [];
+		for (var i in this.legend) {
+			var values;
+			// Get the information for the lines
+			if (!d3.select('.' + this.legend[i].className).classed('bar'))
+				values = d3.values(d3.select('path.' + this.legend[i].className).data())[0].slice(1, 25)
+			// Get the information for the bars
+			else
+				values = d3.values(d3.selectAll('g.' + this.legend[i].className).data())
+			
+			data.push({
+				name: this.legend[i].name,
+				unit: this.legend[i].unit,
+				data: values,
+				className: this.legend[i].className
+			});
+				
+		}
+		
+    	// Create bottom tooltip element
+		var width = 270;
+		var height = 75;
+		var tooltip = d3.select(this.canvas.node().parentNode)
+			.append('g')
+				.attr('class', 'tooltip')
+				.style('opacity', 0);
+		
+		// Draw up arrow
+		tooltip.append('text')
+			.attr('text-anchor', 'middle')
+			.attr('x', (width/2))
+			.attr('y', '-1.5')
+			.style('fill', '#444')
+			.text(String.fromCharCode(9650));
+				
+		// Create background
+		tooltip.append('rect')
+			.attr('width', width)
+			.attr('height', height)
+			.attr('rx', 5)
+			.attr('ry', 5);
+	
+		// Create the function for showing and hiding the tooltip
+		var self = this;
+		// Show function
+    	var show = function(d, i) {
+			// Get the for this bar relevant data
+			var info = [];
+			for (var j in data) {
+				// Get data for the line/area charts and the bar n which the mouse is currently on
+				info.push({
+					name: data[j].name,
+					value: data[j].data[i].usage,
+					unit: data[j].unit,
+					className: data[j].className
+				});
+			}
+			
+		    // Position tooltip
+			var x = self.margin.left + self.x(d.date.getHours()) + (self.x.rangeBand()/2) - (width/2);
+			var y = (self.height + self.margin.top + self.margin.bottom) - height;
+			// First time we position the tooltip?
+			if (tooltip.attr('transform') == null) {
+    			tooltip
+    				.attr('transform', 'translate(' + [x,y] + ')')
+    				.transition()
+    					.duration(self.duration)
+    					.style('opacity', 1);
+			} else {
+    			tooltip.transition()
+    				.duration(self.duration)
+    				.ease(d3.ease('exp-out'))
+    				.attr('transform', 'translate(' + [x,y] + ')')
+    				.style('opacity', 1);
+			}
+			
+			// Write the information in the tooltip
+			tooltip.selectAll('text.info, text.hour').remove();
+
+			// Write hour
+			tooltip.append('text')
+				.attr('class', 'hour')
+				.attr('text-anchor', 'middle')
+				.attr('x', width/2)
+				.attr('dy', 15)
+				.text(function(e) {
+					function getHourString(hour) {
+						if (hour < 10)
+							return '0' + hour;
+						else
+							return hour;
+					};
+					
+					return getHourString(d.date.getHours()) + ':00 - ' + getHourString(d.date.getHours()+1) + ':00'
+				})
+				.style('text-decoration', 'underline')
+				.style('font-weight', 'bold');
+			
+			// Write information
+			for (var j = 0; j < info.length; j++) {
+				// Check which part of the chart was selected and highlight the according text
+				var textStyle;
+				if (d3.select(this).classed(info[j].className))
+					textStyle = 'bolder';
+				else
+					textStyle = 'normal';
+				
+				tooltip.append('text')
+					.attr('class', 'info')
+					.attr('text-anchor', 'start')
+					.attr('x', 5)
+					.attr('dy', 35 + 15*j)
+					.text(info[j].name + ':')
+					.style('font-weight', textStyle);
+				
+				var value = parseFloat(info[j].value.toFixed(4));
+				value = (value >= 100) ? Math.round(value) : value;
+				tooltip.append('text')
+					.attr('class', 'info')
+					.attr('text-anchor', 'end')
+					.attr('x', width - 5)
+					.attr('dy', 35 + 15*j)
+					.text(value + ' ' + info[j].unit)
+					.style('font-weight', textStyle);
+				
+			}
+			
+			// Draw circles on the line/area charts
+			for (var j in info) {
+				// Check if its a line or area chart
+				if (self.yScale[info[j].name]) {
+					// Remove the path-info circle to add it after the highlight circle so that its on front of it.
+					var pathInfo = d3.select(this).remove();
+					
+					y = self.yScale[info[j].name](info[j].value);
+					self.canvas.append('circle')
+						.attr('class', 'highlight-circle ' + info[j].className)
+        				.attr('cx', x)
+        				.attr('cy', y)
+        				.attr('r', 5);
+					
+					self.canvas.append(function() { return pathInfo.node(); });
+				}
+			}
+			
+			// Create tooltip for the part of the bar on which the mouse is on
+			createTooltipFor(d3.event.target, true);
+    	};
+    	
+    	// Hide function
+    	var hide = function(d,i) {
+			// Hide tooltip  
+			tooltip.transition()
+				.duration(self.duration)
+				.delay(500)
+				.style('opacity', 0)
+				.transition()
+					.attr('transform', null);
+			
+			// Remove circles
+			self.canvas.selectAll('.highlight-circle').remove();
+			
+			// Remove all appliance/bar infos
+//			d3.select(self.canvas.node().parentNode).selectAll('.bar-info').transition()
+//				.duration(self.duration)
+//				.delay(500)
+//				.style('opacity', 0)
+//				.transition()
+//					.remove();
+			d3.select(self.canvas.node().parentNode).selectAll('.bar-info.hover').remove();
+		};
+		
+		// Function for clicking on a bar
+		var lastClickedBar;
+		var click = function(d,i) {
+			// Remove old tooltips
+			var removed = d3.select(self.canvas.node().parentNode).selectAll('.bar-info.permanent').remove();
+			
+			// Check if it is the same bar
+			if (lastClickedBar == this) {
+				if (removed.size() == 0)
+					d3.select(this).selectAll('rect').each(function (d, i) {
+						createTooltipFor(this);
+					});					
+			} else {
+				d3.select(this).selectAll('rect').each(function (d, i) {
+					createTooltipFor(this);
+				});
+			}
+			
+			// Save the last bar clicked bar
+			lastClickedBar = this;
+		}
+		
+		// Function that creates the tooltip for the part of the bar whose DOM element will be passed to the function
+		var createTooltipFor = function(node, temporary) {
+			var selection = d3.select(node);
+			var data = selection.datum();
+
+			// Check if target was a bar
+			if (d3.select(node.parentNode).attr('class').indexOf('bar') == -1) return;
+			
+			// Check if all appliances have 0 usage, which would mean that all the appliance usage was moved to another time.
+			// This will also not show a tooltip if there are no appliances at all
+			var applianceUsage = 0;
+			for (var i in data.appliances) {
+				applianceUsage += data.appliances[i].usage;
+			}
+			if (applianceUsage == 0) return;
+			
+			var info;
+			// Check if it is the original bar or an added bar
+			if (selection.attr('class').indexOf('originalBar') != -1) {
+				info = {
+					name: 'Original',
+					duration: 60,
+					value: data.originalUsage,
+					y: selection.attr('y')
+				};
+			} else {
+				for (var i in data.appliances) {
+					if (node == data.appliances[i].node) {
+						// If the appliances was moved and has 0 left usage, don't show the tooltip
+						if (data.appliances[i].usage == 0) return;
+						info = {
+							name: data.appliances[i].appliance,
+							duration: data.appliances[i].duration,
+							value: data.appliances[i].usage,
+							y: d3.select(data.appliances[i].node).attr('y')
+						};
+					}
+				}
+			}
+			
+			// Get the unit used for the bar
+			var unit;
+			for (var j in self.legend) {
+				if (d3.select(node.parentNode).attr('class').indexOf(self.legend[j].className) != -1)
+					unit = self.legend[j].unit;
+			}
+			
+			// Create tooltip
+			var width = 175;
+			var height = 20;
+			var x = self.margin.left + self.x(data.date.getHours()) + self.x.rangeBand() + 5;
+			var y = self.margin.top + parseFloat(info.y);				
+
+			var classes = 'bar-info';
+			classes += (temporary) ? ' hover' : ' permanent';
+			var tooltip = d3.select(self.canvas.node().parentNode).append('g')
+				.attr('class', classes)
+				.attr('transform', 'translate('  + [x,y - (height/2)] + ')');
+
+			// Draw up arrow
+			tooltip.append('text')
+				.attr('text-anchor', 'middle')
+				.attr('dominant-baseline', 'middle')
+				.attr('y', height/2)
+				.style('fill', '#444')
+				.text(String.fromCharCode(9664));
+			
+			// Draw background rectangle
+			tooltip.append('rect')
+				.attr('x', 5)
+				.attr('width', width)
+				.attr('height', height)
+				.attr('rx', 5)
+				.attr('ry', 5)
+				.style('opacity', 0.9);
+			
+			// Draw info text
+			var name = (info.name.length > 13) ? info.name.slice(0, 13) + '...' : info.name;
+			tooltip.append('text')
+				.attr('text-anchor', 'start')
+				.attr('dominant-baseline', 'middle')
+				.attr('x', 8)
+				.attr('y', height/2)
+				.text(name);
+			tooltip.append('text')
+				.attr('text-anchor', 'end')
+				.attr('dominant-baseline', 'middle')
+				.attr('x', width - 3)
+				.attr('y', height/2)
+				.text(parseFloat(info.value.toFixed(4)).toString() + unit);
+		}
+		
+		// Add the mouseover and click behaviour for the bars
+		d3.selectAll('.bar')
+			.on('mouseover', show)
+			.on('mouseout', hide)
+			.on('click', click);
+		
+		// Add mouseover behaviour for line and area charts
+		for (var i in this.legend) {
+			d3.selectAll('.path-info.'  + this.legend[i].className)
+				.on('mouseover', show)
+				.on('mouseout', hide);	
+		}
+    },
+    
+    /**
+     * Adds new bars to the bar graph.
+     * Is called when user adds usage or when he moves usage.
+     * 
+     * @param data An array of object specifying the usage of an appliance. (Needs properties usage, hour, appliance and duration)
+     */
+    addBars: function(data) {	
+    	var newMaxUsage = -1;
+    	for (var i in data) {
+    		// Get the g element of the bar to which the data will be added
+        	var bar;
+        	this.canvas.selectAll('.bar').each(function (d,j) {
+        		if (d.date.getHours() == data[i].hour)
+        			bar = d3.select(this);
+        	})
+        	
+        	var barData = bar.datum();  
+
+        	// Check of there are already appliance added to this bar
+        	if (!barData.appliances) barData.appliances = [];
+
+        	// Check if the appliances is already added to the bar
+        	var appliance = { duration: 0, usage: 0 }
+        	var modify = false;
+        	for (var j in barData.appliances) {
+        		if (barData.appliances[j].appliance == data[i].appliance) {
+        			appliance = barData.appliances[j];
+        			modify = true;
+        			break;
+        		}
+        	}
+        	
+        	// Modify appliance data
+        	appliance.appliance = data[i].appliance;
+        	appliance.duration += data[i].duration;
+        	appliance.usage += data[i].usage;
+        	
+        	// Add appliance and rectangle if its new or modify already existing ones.
+        	if (!modify) {        		
+	        	// Add the new rect to the bar
+	        	var applianceBar = bar.append("rect")
+	        		.attr('class', 'addedBar')
+					.attr("y", this.y(barData.usage))
+					.attr("height", 0)
+					.attr('width', this.x.rangeBand())
+	        		.transition()
+						.duration(this.duration)
+						.attr("y", this.y(data[i].usage + barData.usage))
+						.attr("height", this.y(barData.usage) - this.y(data[i].usage + barData.usage));
+	        	
+	        	appliance.node = applianceBar.node();
+        		barData.appliances.push(appliance);  
+        		barData.usage += data[i].usage;
+        	} else {        		
+        		this.modifyBar(appliance.node, data[i].usage, appliance.appliance);
+        	}
+        	
+        	// Check if we have to redraw the chart because one bar is out of scale
+    		if (barData.usage > this.maxUsage) newMaxUsage = barData.usage;
+    	}    	
+   
+    	if (newMaxUsage > 0) {        
+    		console.debug('The bar chart should be redrawn in a different scale');
+//        	var data = this.canvas.selectAll('.bar').data();
+//			
+//			// Get the rest of the info from the legend
+//			var legendInfo;
+//			for (var i in this.legend) {
+//				if (this.canvas.select('.bar').attr('class').indexOf(this.legend[i].className) != -1)
+//					legendInfo = this.legend[i];
+//			}
+//			
+//			this.canvas.selectAll('.bar').remove();
+//			this.maxUsage = newMaxUsage;
+//			this.createBarChart(data, legendInfo.name, legendInfo.unit, legendInfo.className);
+    	}
+    },
+    
+    /**
+     * Removes part of a bar.
+     * 
+     * @param data An array of object specifying the usage of an appliance. (Needs properties usage, hour, appliance and duration)
+     * @returns Returns the removed appliance uses.
+     */
+    removeBars: function (data) {
+    	var removed = [];
+    	for (var i in data) {   
+    		// Get the g element of the bar to which the data will be added
+        	var bar;
+        	this.canvas.selectAll('.bar').each(function (d,j) {
+        		if (d.date.getHours() == data[i].hour)
+        			bar = d3.select(this);
+        	})
+        	
+        	var barData = bar.datum(); 
+        	var usage = data[i].usage;
+        	var oldUsage = barData.usage;
+        	
+        	// Check if there is already usage for this appliance on this bar
+        	for (var j in barData.appliances) {
+        		if (barData.appliances[j].appliance == data[i].appliance) {
+        			var appliance = barData.appliances[j];
+        			// Subtract the usage we want to remove from the appliance usage
+        			if (appliance.usage - usage <= 0) {
+        				// There is not enough usage of the appliance to remove
+        				usage -= appliance.usage;
+        				var removeUsage = appliance.usage;
+            			appliance.usage = 0;
+	        			this.modifyBar(appliance.node, -removeUsage, appliance.appliance);
+        			} else {
+        				// There is more or equal usage of the appliance than we want to remove
+	        			appliance.usage -= usage;
+	        			this.modifyBar(appliance.node, -usage, appliance.appliance);
+	        			usage = 0;
+        			}
+        		}
+        	}
+        	
+        	// Check if we have to remove stuff from the original bar
+        	if (usage > 0) {
+        		if (usage > barData.originalUsage) {
+        			// We do not have enough usage in that hour, only remove whats there
+        			usage = barData.originalUsage
+        			
+        			// We have to correct the amount we are going to add to the new bar
+//        			var newDuration = +usage / (+data[i].usage / +data[i].duration);
+//        			newDuration = parseFloat(newDuration.toFixed(4));        			
+//        			corrections.push( {
+//        				hour: data[i].hour,
+//        				appliance: data[i].appliance,
+//        				usage: usage,
+//        				duration: newDuration
+//        			});
+        		}
+        			
+        		this.modifyBar(bar.select('.originalBar').node(), -usage);
+            	barData.originalUsage -= usage;
+        	}        	
+
+        	removed.push({ hour: data[i].hour, usage: (oldUsage - barData.usage) });
+    	}
+    	
+    	// Create an object that contains the hour form which and the amount of usage that was removed. Will be used to get the cost of the usage that was removed.
+    	return removed;
+    },
+    
+    /**
+     * Modifies the bar represented by the given DOM node to represent the new data.
+     * 
+     * @param node The DOM node which represents the bar that will be changed.
+     * @param usage The amount of usage that should be added (postive) / removed (negative).
+     * @param appliance Optional. If specified its the name of the appliance of the bar.
+     */
+    modifyBar: function(node, usage, appliance) { 
+    	// Remove tooltips
+    	d3.selectAll('.bar-info').remove();
+    	
+    	// Get data for the bar
+    	var bar = d3.select(node);
+    	var data = bar.datum();
+    	data.usage += usage;
+    	var totalUsageBefore = data.originalUsage;
+    	
+    	// If we want to modify a appliance bar we need to add the usage of all appliances which bars are below the appliance bar to be modified.
+    	var index = 0;
+    	if (appliance) {
+    		// Add the usage of all bars below the bar to be modified together.
+	    	for (var i in data.appliances) {
+	    		if (data.appliances[i].appliance == appliance) {
+	    			// The usage for the appliance we want to modify is already set to the new value, 
+	    			// so in order to get the value that is used for the bar right now
+	    	    	// we have to subtract the usage change from it.
+	    			totalUsageBefore += data.appliances[i].usage - usage;
+	    			index = i;
+	    			break;
+	    		}
+	    		totalUsageBefore += data.appliances[i].usage;
+	    	}
+    	}
+    	
+    	// Change size of the bar
+    	var usageWithoutBar = (appliance) ? totalUsageBefore - (data.appliances[index].usage - usage) : 0;
+    	var usageWithBar = totalUsageBefore + usage;
+    	var newY = this.y(usageWithBar);
+    	var newHeight = this.y(usageWithoutBar) - this.y(usageWithBar);
+    	var delay = 0;//(appliance) ? 0 : this.duration;
+    	bar.transition()
+    		.duration(this.duration)
+    		.delay(delay)
+    		.attr('y', newY)
+    		.attr('height', newHeight)
+    	
+    	// Now we have to move all the appliance bars that are on top of the modified bar, if there are any
+    	if (!data.appliances) return;
+    	for (var i = (+index+1); i < data.appliances.length; i++) {
+    		bar = d3.select(data.appliances[i].node);
+    		usageWithBar += data.appliances[i].usage;
+    		newY = this.y(usageWithBar);
+        	
+	    	bar.transition()
+	    		.duration(this.duration)
+	    		.attr('y', newY)
+    	}
+    	
+    	// TODO: Deal with the rectangles with height 0
+    	 	
+    }
+};
