@@ -1,0 +1,106 @@
+
+
+import java.util.Vector;
+
+
+class Functions{
+    
+	double[][] alpha;
+	double[][] vita;
+	double[][] gamma;
+	double[][][] digamma;
+	double[] c;
+        double oldLogProb;
+	double logProb;
+	int maxIt; 
+	
+	public Functions(int N, Vector<Integer> sequence, int max) {
+            alpha = new double[sequence.size()][N];
+            vita = new double[sequence.size()][N];
+            gamma = new double [sequence.size()][N];
+            digamma = new double [sequence.size()][N][N];		
+            c = new double[sequence.size()];
+            oldLogProb = Double.NEGATIVE_INFINITY;
+            logProb = 0;
+            maxIt = max;
+	}
+	
+	void aPass (Hmm l) {	
+            c[0] = 0;
+            for (int i=0; i<l.n; i++) {			
+                alpha[0][i] = l.pi[i]*l.b[i][l.sequence.get(0)];
+		c[0] += alpha[0][i]; 	
+            }
+            c[0] = 1/c[0];
+            for (int i=0; i<l.n; i++) {
+                alpha[0][i] = c[0]*alpha[0][i];
+            }
+            for (int t=1; t<l.sequence.size(); t++) {
+                c[t] = 0;
+		for (int i=0; i<l.n; i++) {
+                    alpha[t][i] = 0;
+                    for (int j=0; j<l.n; j++) {					
+                        alpha[t][i] = alpha[t][i] + alpha[t-1][j]*l.a[j][i];
+                    }
+                    alpha[t][i] = alpha[t][i]*l.b[i][l.sequence.get(t)];
+                    c[t] = c[t] + alpha[t][i];
+		}
+                c[t] = 1/c[t];
+		for (int i=0; i<l.n; i++) {
+                    alpha[t][i] = c[t]*alpha[t][i];
+		}
+            }	
+	}//aPass
+	
+	
+	void bPass (Hmm l){
+            for (int i=0; i<l.n; i++) {
+                vita[l.sequence.size()-1][i] = c[l.sequence.size()-1];
+            }
+            for (int t=l.sequence.size()-2; t>=0; t--) {
+                for (int i=0; i<l.n; i++) {
+                    vita[t][i]=0;
+                    for (int j=0; j<l.n; j++) {
+                        vita[t][i] = vita[t][i] + l.takeA()[i][j]*l.takeB()[j][l.sequence.get(t+1)]*vita[t+1][j];
+                    }
+                    vita[t][i] = c[t]*vita[t][i];
+                }
+            }
+	}//bPass
+	
+	
+	void g (Hmm l) {
+            for (int t=0; t<l.sequence.size()-1; t++) {
+                double ari = 0;
+		for (int i=0; i<l.n; i++) {
+                    for (int j=0; j<l.n; j++) {
+                        ari = ari + alpha[t][i]*l.takeA()[i][j]*l.takeB()[j][l.sequence.get(t+1)]*vita[t+1][j];
+                    }
+		}
+		for (int i=0; i<l.n; i++) {
+                    gamma[t][i] = 0;
+                    for (int j=0; j<l.n; j++) {
+                        digamma[t][i][j] = (alpha[t][i] * l.takeA()[i][j] * l.takeB()[j][l.sequence.get(t+1)] * vita[t+1][j])/ari;
+                        gamma[t][i] = gamma[t][i] + digamma[t][i][j];
+                    }
+		}
+            }
+	}//g
+	
+	
+	void logProb(Hmm l) {
+            double logProb = 0;
+            for (int i=0; i<l.sequence.size(); i++) {
+                logProb += Math.log10(c[i]);
+            }
+            this.logProb = -logProb;		
+	}//logProb
+	
+        boolean stop(int iters, Hmm l) {				
+            if ((iters <50) && (logProb > oldLogProb)) {			
+                this.oldLogProb = logProb;
+                    return false;
+		}
+		return true;
+	}
+}//Functions
