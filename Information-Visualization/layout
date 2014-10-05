@@ -1,0 +1,238 @@
+body {
+	width: 100%;
+	font: 16px sans-serif;
+}
+
+select {
+	font-size: 16px;
+}
+
+.container {
+	text-align: center;
+	vertical-align: middle;
+}
+
+.app {
+	margin: 20px auto 0 auto;	
+	display: none;
+}
+
+.date {
+	margin: 15px auto;
+}
+
+.datepicker {
+	width: 325px;	
+	padding: 5px 10px;
+	font-size: 16pt;
+	text-align: center;
+	vertical-align: middle;	
+}
+
+div.ui-datepicker{
+	width: 341px;
+}
+
+.date-button {
+	width: 30px;
+	vertical-align: middle;
+	margin: auto 5px;
+}
+
+
+/*
+ * TAB STUFF
+ */
+.tabs {
+	text-align: left;
+	margin-bottom: 20px;
+}
+
+.tabs ul {
+	margin: 0;
+	padding: 3px 0;	
+	border-bottom: 1px solid #000;	
+}
+
+.tabs li {	
+	display: inline;	
+	list-style: none;
+	margin-right: -5px;
+}
+
+.tabs li a {
+	text-decoration: none!important;
+	color: #3D7686;
+	font-size: 18px;
+	font-weight: bold;
+	padding: 4px 10px;	
+	border: 1px solid #000;
+	border-bottom: none;	
+}
+
+.tabs li a.selected {	
+	background: #fff;
+	border-bottom: 1px solid #fff;	
+}
+
+.tabs div.tab {
+	clear: both;
+	padding: 10px 20px;
+	border: 1px solid black;
+	border-top: none;
+	min-width: 250px;	
+	max-width: 350px;
+	height: 275px;
+}
+
+
+/* 
+ * Appliance form
+ */
+.tab p.text {
+	margin: 2px 0;
+}
+
+.tab p.sub {
+	font-size: 14px;	
+}
+
+.tab table {
+	height: 100%;
+	width: 100%;
+}
+
+.tab table td {
+	white-space: nowrap;
+}
+
+.tab table tr:first-Child td {
+	padding-bottom: 25px;
+}
+
+.tab table tr td:first-Child {
+	width: 40%;
+}
+
+.tab table td.bottom-row {	
+	height: 99%;
+	vertical-align: bottom;
+}
+
+.tab table .button {
+	margin-top: 15px;
+	margin-bottom: 15px;	
+	width: 100%;
+	text-align: center;
+}
+
+.tab select.appliances {
+	width: 100%;	
+}
+
+.tab span.power {
+	font-weight: bold;
+}
+
+.tab .button {
+	font-weight: bold;
+	color: #fff;
+	background: #3D7686;
+	border-radius: 5px;
+	padding: 10px 0;
+	cursor: pointer;
+}
+
+.electricityChart {
+	vertical-align: bottom;
+}
+
+
+/*
+ * Chart stuff
+ */
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+
+.tick text {
+	font-size: 12px;
+}
+
+.x.axis path {
+	display: none;
+}
+
+.bar rect:hover {
+	fill: #4594D0 !important;
+}
+
+.addedBar {
+	fill: #3D7686;	
+}
+
+path.line {
+	fill: none !important;
+	stroke-width: 3px;	
+}
+
+.userUsage {
+	fill: #6CA19E;	
+}
+
+.nodeUsage {
+	stroke: #20234F;
+	fill: #20234F;	
+}
+
+.price {	
+	stroke: #763471;	
+	fill: #763471;
+}
+
+.tooltip text {
+	font-size: 14px;
+	fill: #111;
+}
+
+
+.tooltip rect {
+	fill: #6CA19E;
+}
+
+.bar-info text {
+	font-size: 14px;	
+	fill: #111;		
+}
+
+.bar-info rect {
+	fill: #4594D0;	
+}
+
+
+
+/*
+ * Price comparison chart
+ */
+.priceChart-container {
+	border: 1px solid #000;
+	padding: 10px 0;
+	margin-bottom: 75px; /* Difference between the charts' bottom margin plus bottom margin of table cell above*/
+}
+
+.priceChart-header {
+	font-size: 18px;
+	font-weight: bolder;
+	color: #763471;
+}
+
+.priceChart-subheader {
+	font-size: 14px;
+}
+
+.priceBar {
+	fill: #763471;
+}
