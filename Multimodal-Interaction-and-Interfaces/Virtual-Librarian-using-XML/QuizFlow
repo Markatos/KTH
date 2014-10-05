@@ -1,0 +1,796 @@
+<?xml version="1.0" encoding="utf-8"?>
+<flow name="QuizFlow" package="iristk.app.quiz" 
+	initial="Idle" xmlns="iristk.flow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mp="iristk.dialog.MultiParty"
+	xmlns:p="iristk.flow.param"
+	xsi:schemaLocation="iristk.flow flow.xsd iristk.dialog.MultiParty MultiParty.xsd">
+	
+	<!--
+	Author:Markatos Gerasimos
+	-->
+	
+	<var name="mp" type="iristk.dialog.MultiParty" value="new iristk.dialog.MultiParty()"/>
+	<var name="users" type="iristk.dialog.UserModel" value="mp.users"/>
+	<var name="question" type="Question"/>
+	<var name="questions" type="QuestionSet" value="new QuestionSet()"/>
+	<var name="guess" type="int" value="0"/>
+		
+	<state id="Idle">
+		<onEntry>
+			<mp:attendNobody/>
+			<goto state="Greeting" />
+		</onEntry>
+		<mp:onEnterAgent>
+			<exec>users:(event:agent):score = 0</exec>
+			<mp:attend target="event:agent" />
+			<goto state="Greeting" />
+		</mp:onEnterAgent>
+	</state>
+	
+	<state id="Dialog">
+		<mp:onLeaveAttending>
+			<if cond="users.hasUser()">
+				<mp:attendRandom/>
+				
+			<else />
+				<goto state="Greeting"/>
+			</if>
+		</mp:onLeaveAttending>
+		<mp:onEnterAgent>
+			<exec>users:(event:agent):score = 0</exec>
+		</mp:onEnterAgent>
+	</state>
+	
+	
+	<state id="Greeting" extends="Dialog">
+	
+		<onEntry>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'hello'">
+			<goto state="Greeting2"/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<mp:say>If you want to talk to me, just say hello.</mp:say>
+			<reentry/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'smile'"/>
+			<mp:say>If you want to talk to me, just say hello.</mp:say>
+			<reentry/>
+		</mp:onSpeech>
+		
+		
+	</state>
+	
+	<state id="Greeting2" extends="Dialog">
+		<onEntry>
+			<send event="action.gesture" p:name="'smile'"/>
+			<mp:say>Hello. Welcome to our library. Do you want to create an account, to login or to get help.</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'login'">
+			<goto state="Greeting1"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'create'">
+			<goto state="Create"/>
+		</mp:onSpeech>
+
+		<mp:onSpeech sem="'help'">
+			<goto state="Help1"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<reentry/>
+		</mp:onNoSpeech>
+	</state>
+	
+	<state id="Greeting1" extends="Dialog">
+		<onEntry>
+			<mp:say>What is your username</mp:say>
+			<mp:listen/>
+		</onEntry>
+	
+		<mp:onSpeech>
+			<mp:say>What is your password.</mp:say>
+			<mp:listen/>
+			<goto state="Login"/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="Login" extends="Dialog">
+		<onEntry>
+			<mp:say>Would you like to search for a book, to return a book, to check your charges or to get help?</mp:say>
+			<mp:listen/>
+		</onEntry>
+
+		<mp:onSpeech sem="'search'">
+			<goto state="SearchBook"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'returnqwe'">
+			<goto state="Returnq"/>
+		</mp:onSpeech>
+		
+
+		<mp:onSpeech sem="'checkcharges'">
+			<goto state="Check"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'help'">
+			<goto state="Help2"/>
+		</mp:onSpeech>
+		
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand please?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+
+		
+		<mp:onNoSpeech>
+			<reentry/>
+		</mp:onNoSpeech>
+		
+		
+	</state>
+	
+	
+	
+	
+	<state id="SearchBook">
+		<onEntry>
+			<mp:say>Great, what is the title of the book?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>what is the title of the book?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'bookone'">
+			<goto state="StateOne"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'booktwo'">
+			<goto state="StateTwo"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookthree'">
+			<goto state="StateThree"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookfour'">
+			<goto state="StateFour"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookfive'">
+			<goto state="StateFive"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'booksix'">
+			<goto state="StateSix"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="StateOne">
+		<onEntry>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'one'">
+			<mp:say>Your book is in h eleven.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>The book of john young is available.</mp:say>
+			<goto state="isit1"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		
+	</state>
+	
+	<state id="StateTwo">
+		<onEntry>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'two'">
+			<mp:say>Your book is in b two.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>The book of jeremy ramsden is available.</mp:say>
+			<goto state="isit2"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="StateThree">
+		<onEntry>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'three'">
+			<mp:say>Your book is in k five.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>The book of kevin murphy is available.</mp:say>
+			<goto state="isit3"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		
+	</state>
+	
+	
+	<state id="StateFour">
+		<onEntry>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'four'">
+			<mp:say>Your book is in d six.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>The book of alwin walther is available.</mp:say>
+			<goto state="isit4"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		
+	</state>
+	
+	
+	<state id="StateFive">
+		<onEntry>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'five'">
+			<mp:say>Your book is in h ten.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>The book of raymond chang is available.</mp:say>
+			<goto state="isit5"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		
+	</state>
+	
+	
+	<state id="StateSix">
+		<onEntry>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onNoSpeech>
+			<mp:say>Do you know the author?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'six'">
+			<mp:say>Your book is in b seven.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'seven'">
+			<mp:say>Your book is in o three.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<mp:say>The book of james walker and this one of jay orear is available.</mp:say>
+			<goto state="isit6"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		
+	</state>
+	
+	
+	
+	<state id="isit1">
+		
+		<onEntry>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available. </mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Your book is in h eleven.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="isit2">
+		<onEntry>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available. </mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Your book is in b two.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="isit3">
+		<onEntry>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available. </mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Your book is in k five.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="isit4">
+		<onEntry>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available. </mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Your book is in d six.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	<state id="isit5">
+		<onEntry>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available. </mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Your book is in h ten.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onNoSpeech>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="isit6">
+		<onEntry>
+			<mp:say>Is it one of these?</mp:say>
+			<mp:listen/>
+		</onEntry>
+		
+		<mp:onSpeech sem="'no'">
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available. </mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Which one?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'six'">
+			<mp:say>Your book is in b seven.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'seven'">
+			<mp:say>Your book is in o three.</mp:say>
+			<goto state="Borrow"/>
+		</mp:onSpeech>
+		
+		
+		<mp:onNoSpeech>
+			<mp:say>Is this what you are looking for?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	
+	<state id="Borrow">
+		<onEntry>
+			<mp:say>Do you want to borrow it?</mp:say>
+			<mp:listen/>
+		</onEntry>
+
+		<mp:onNoSpeech>
+			<mp:say>Do you want to borrow it?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<mp:say>Ok. You can now get your book.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="Else">
+		<onEntry>
+			<mp:say>Do you need something else?</mp:say>
+			<mp:listen/>
+		</onEntry>
+
+		<mp:onNoSpeech>
+			<mp:say>Do you need something else?</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'yes'">
+			<goto state="Login"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'no'">
+			<goto state="Goodbye"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>Could you repeat your demand?</mp:say>
+			<mp:listen/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="Create">
+		<onEntry>
+			<mp:say>Please, tell me your desired username</mp:say>
+			<mp:listen/>
+		</onEntry>
+
+		<mp:onNoSpeech>
+			<mp:say>tell me your desired username</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech>
+			<mp:say>tell me your desired password</mp:say>
+			<mp:listen/>
+			<goto state="Create1"/>
+		</mp:onSpeech>
+		
+
+	</state>
+	
+	
+	<state id="Create1">
+		<onEntry>
+			<mp:say>You have now created an account</mp:say>
+			<goto state="Else"/>
+		</onEntry>
+
+
+	</state>
+	
+	
+	<state id="Returnq">
+		<onEntry>
+			<mp:say>What is the title of the book you want to return</mp:say>
+			<mp:listen/>
+		</onEntry>
+
+		<mp:onNoSpeech>
+			<mp:say>What is the title of the book you want to return</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'bookone'">
+			<mp:say>Thank you for returning the book on time</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'booktwo'">
+			<mp:say>Thank you for returning the book. The book is overdue. You have to pay five crowns.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookthree'">
+			<mp:say>Thank you for returning the book on time</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookfour'">
+			<mp:say>Thank you for returning the book. The book is overdue. You have to pay ten crowns.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookfive'">
+			<mp:say>Thank you for returning the book. The book is overdue. You have to pay twenty crowns.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'booksix'">
+			<mp:say>Thank you for returning the book on time</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>There is no such book in this library.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	<state id="Check">
+		<onEntry>
+			<mp:say>For which book you want to check the charges</mp:say>
+			<mp:listen/>
+		</onEntry>
+
+		<mp:onNoSpeech>
+			<mp:say>For which book you want to check the charges</mp:say>
+			<mp:listen/>
+		</mp:onNoSpeech>
+		
+		<mp:onSpeech sem="'bookone'">
+			<mp:say>You don't have any charges</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'booktwo'">
+			<mp:say>The book is overdue. The charge is five crowns.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookthree'">
+			<mp:say>You don't have any charges</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookfour'">
+			<mp:say>The book is overdue.  The charge is ten crowns.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'bookfive'">
+			<mp:say>The book is overdue.  The charge is twenty crowns.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech sem="'booksix'">
+			<mp:say>You don't have any charges</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+		<mp:onSpeech>
+			<send event="action.gesture" p:name="'shake_head'"/>
+			<mp:say>This book is not available.</mp:say>
+			<goto state="Else"/>
+		</mp:onSpeech>
+		
+	</state>
+	
+	
+	<state id="Help1">
+		<onEntry>
+			<mp:say>In order to login, say login. In order to create an account, say create an account. If you need something else, say logout and go to a human assistant</mp:say>
+			<goto state="Greeting2"/>
+		</onEntry>
+	</state>
+	
+	<state id="Help2">
+		<onEntry>
+			<mp:say>In order to search for a book, say search. In order to return a book, say return. In order to check for charges, say check for charges.</mp:say>
+			<goto state="Login"/>
+		</onEntry>
+
+	</state>
+	
+
+	
+
+
+	<state id="Goodbye" extends="Idle">
+		<onEntry>
+			<send event="action.gesture" p:name="'smile'"/>
+			<mp:say>You are now logged out. Have a nice day.</mp:say>
+			<goto state="Greeting"/>
+		</onEntry>
+	</state>
+	
+</flow>
